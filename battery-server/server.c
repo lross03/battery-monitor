@@ -44,7 +44,8 @@ int main() {
         }
         else {
             snprintf(buffer, sizeof(buffer), "%d\n", previousBattery);
-            printf("Connected and sending battery percentage %d%%\n", previousBattery);
+            
+            //printf("Connected and sending battery percentage %d%%\n", previousBattery);
 
             DWORD bytesWritten;
             if (!WriteFile(hSerial, buffer, strlen(buffer), &bytesWritten, NULL)) {
@@ -65,9 +66,9 @@ int main() {
             }
             else {
                 if (abs(battery - previousBattery) >= 5){
-                    snprintf(buffer, sizeof(buffer), "%d", battery);
-                    printf("Connected and sending battery percentage %s%%\n", buffer);
-                    printf("Sending data: %s\n", buffer);
+                    snprintf(buffer, sizeof(buffer), "%d\n", battery);
+                   // printf("Connected and sending battery percentage %s%%\n", buffer);
+                    printf("%s", buffer);
 
                     DWORD bytesWritten;
                     if (!WriteFile(hSerial, buffer, strlen(buffer), &bytesWritten, NULL)) {
