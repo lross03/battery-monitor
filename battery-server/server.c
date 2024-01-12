@@ -1,4 +1,4 @@
-#include <stdio.h>
+/*#include <stdio.h>
 #include <Windows.h>
 #include <stdlib.h>
 
@@ -38,7 +38,7 @@ int main() {
     char buffer[1024];
 
     if(GetSystemPowerStatus(&status)) {
-        previousBattery = 0;//status.BatteryLifePercent;
+        previousBattery = status.BatteryLifePercent;
         if(previousBattery == 255) {
             printf("Battery percentage unknown\n");
         }
@@ -85,5 +85,112 @@ int main() {
     CloseHandle(hSerial);
     return 0;
 }
+*/
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <Windows.h>
+
+#pragma comment(lib, "ws2_32.lib")
+
+#define PORT 12345
+#define MAX_CONNECTIONS 2
+#define BUFFER_SIZE 1024
+
+int getBatteryStatus() {
+    SYSTEM_POWER_STATUS status;
+    while(1) {
+        if(GetSystemPowerStatus(&status)) {
+            int battery = status.BatteryLifePercent;
+            if(battery == 255) {
+                printf("Battery percentage unknown\n");
+            }
+            else {
+                return battery;
+            }
+        }
+        else {
+            printf("Error reading battery status\n");
+        }
+    }
+
+    return -1;
+}
+
+int main() {
+    WSADATA wsaData;
+    int server_socket, client_socket;
+    struct sockaddr_in server_address, client_address;
+    int client_address_len = sizeof(client_address);
+
+    char battery_str[20];
+
+
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+        printf("Failed to initialize Windows Sockets\n");
+        return 1;
+    }
+
+    //set up server socket
+    if ((server_socket = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        printf("Error creating socket");
+        return 1;
+    }
+
+    server_address.sin_family = AF_INET;
+    server_address.sin_addr.s_addr = INADDR_ANY;
+    server_address.sin_port = htons(PORT);
+
+    if (bind(server_socket, (struct sockaddr*)&server_address,
+            sizeof(server_address)) < 0) { 
+        
+        printf("Failed to bind server socket\n");
+        closesocket(server_socket);
+        WSACleanup();
+        return 1;
+    }
+
+    if (listen(server_socket, MAX_CONNECTIONS) < 0 ) {
+        printf("Error listening\n");
+        closesocket(server_socket);
+        WSACleanup();
+        return 1;
+    }
+
+    printf("Awaiting connections on port %d\n", PORT);
+    if ((client_socket = accept(server_socket, (struct sockaddr*)&client_address, &client_address_len)) < 0) {
+            printf("Error acceptng connection\n");
+            return 1;
+    }
+    printf("Accepted connection from %s:%d\n", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
+
+    while (1) {
+        printf("start loop\n");
+
+        int battery = getBatteryStatus();
+        
+        snprintf(battery_str, sizeof(battery_str), "%d\n", battery);
+
+        if (battery >= 0 && battery <= 100) {
+            printf("%s\n", battery_str);
+            if(send(client_socket, battery_str, strlen(battery_str), 0) < 0){
+                printf("Error sending message\n");
+                return 1;
+            }
+            else {
+                Sleep(1000);
+            }
+        } 
+        else {
+            printf("Error: battery percentage not within range\n");
+        }
+        printf("end loop\n");
+    }
+
+    closesocket(client_socket);
+    closesocket(server_socket);
+    WSACleanup();
+
+    return 0;
+}
 
