@@ -164,27 +164,30 @@ int main() {
     }
     printf("Accepted connection from %s:%d\n", inet_ntoa(client_address.sin_addr), ntohs(client_address.sin_port));
 
+    int battery = 0;
+
     while (1) {
-        printf("start loop\n");
+        int nextBattery = getBatteryStatus();
 
-        int battery = getBatteryStatus();
-        
-        snprintf(battery_str, sizeof(battery_str), "%d\n", battery);
+        if(nextBattery != battery) {
+            battery = nextBattery;
+            snprintf(battery_str, sizeof(battery_str), "%d\n", battery);
 
-        if (battery >= 0 && battery <= 100) {
-            printf("%s\n", battery_str);
-            if(send(client_socket, battery_str, strlen(battery_str), 0) < 0){
-                printf("Error sending message\n");
-                return 1;
-            }
+            if (battery >= 0 && battery <= 100) {
+                printf("%s\n", battery_str);
+                if(send(client_socket, battery_str, strlen(battery_str), 0) < 0){
+                    printf("Error sending message\n");
+                    return 1;
+                }
+                else {
+                    Sleep(1000);
+                }
+            } 
             else {
-                Sleep(1000);
+                printf("Error: battery percentage not within range\n");
             }
+            printf("end loop\n");
         } 
-        else {
-            printf("Error: battery percentage not within range\n");
-        }
-        printf("end loop\n");
     }
 
     closesocket(client_socket);
