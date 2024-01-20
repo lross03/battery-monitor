@@ -155,10 +155,9 @@ esp_err_t connect_wifi()
         status = WIFI_FAILURE;
     }
 
-    /* The event will not be processed after unregister */
     //ESP_ERROR_CHECK(esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, got_ip_event_instance));
-    ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_handler_event_instance));
-    vEventGroupDelete(wifi_event_group);
+    //ESP_ERROR_CHECK(esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, wifi_handler_event_instance));
+    //vEventGroupDelete(wifi_event_group);
 
     return status;
 }
